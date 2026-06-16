@@ -1,0 +1,122 @@
+﻿{
+  "verdict": "conditional_pass",
+  "score": 56,
+  "summary": "Strong vaporwave aesthetic with genuine craft in the game engine and visual layering, undermined by code architecture issues (1700-line god component, massive duplication), accessibility gaps, and missing basic UX states.",
+  "p0": [
+    {
+      "id": "P0-1",
+      "title": "Accessibility: Canvas game has no keyboard focus management",
+      "evidence": "SpaceInvaders.tsx: tab-index on canvas but no focus ring, no ARIA live regions, no screen-reader announcements for score changes or game state transitions.",
+      "location": "src/components/SpaceInvaders.tsx"
+    },
+    {
+      "id": "P0-2",
+      "title": "1700-line god component with 622-line inline game loop useEffect",
+      "evidence": "SpaceInvaders.tsx is a single monolithic component. The game loop alone is 622 lines inside a useEffect callback. This prevents any reuse, testing, or maintenance.",
+      "location": "src/components/SpaceInvaders.tsx"
+    },
+    {
+      "id": "P0-3",
+      "title": "60+ instances of hardcoded colors instead of design tokens",
+      "evidence": "Colors like '#FF71CE', '#01CDFE', '#05FFA1', '#0b0114' are hardcoded throughout the canvas rendering code instead of using the CSS custom properties already defined in index.css.",
+      "location": "src/components/SpaceInvaders.tsx (lines 780-1694)"
+    },
+    {
+      "id": "P0-4",
+      "title": "18 near-identical drawShape invader methods (massive duplication)",
+      "evidence": "drawShape0 through drawShape17 are ~35 lines each, totaling ~630 lines of nearly identical pixel-art drawing code differing only in color and shape offsets.",
+      "location": "src/components/SpaceInvaders.tsx (lines 330-960)"
+    }
+  ],
+  "p1": [
+    {
+      "id": "P1-1",
+      "title": "text-white/45 fails WCAG AA for normal-size text (4.29:1 vs 4.5:1)",
+      "evidence": "Used for metric labels in CABINET STATUS card and keyboard hints. At 9px font size this is not large text, so 4.5:1 is required.",
+      "location": "src/App.tsx (lines 118, 136)"
+    },
+    {
+      "id": "P1-2",
+      "title": "Audio progress bar is non-interactive",
+      "evidence": "Progress bar is a pure visual indicator (motion.div with width %). Users cannot click or drag to seek. No <input type=range> or click handler on the track.",
+      "location": "src/components/AudioPlayer.tsx (lines 157-165)"
+    },
+    {
+      "id": "P1-3",
+      "title": "No meta description, no OG tags, no favicon",
+      "evidence": "index.html has <title> but no <meta name=description>, no Open Graph tags, no <link rel=icon>. Lighthouse SEO will flag all of these.",
+      "location": "index.html"
+    },
+    {
+      "id": "P1-4",
+      "title": "Audio autoplay may be blocked with no recovery UX",
+      "evidence": "When isPlaying is true and currentTrackIndex changes, the useEffect calls .play() which browsers commonly block. Error state shows text but play state stays true momentarily.",
+      "location": "src/components/AudioPlayer.tsx (lines 37-44)"
+    },
+    {
+      "id": "P1-5",
+      "title": "No loading/empty state for audio tracks",
+      "evidence": "External MP3 URLs from soundhelix.com. No loading spinner, no network error recovery, no retry mechanism. If URLs are unreachable the player shows nothing until the error message appears.",
+      "location": "src/components/AudioPlayer.tsx"
+    }
+  ],
+  "p2": [
+    {
+      "id": "P2-1",
+      "title": "Header brand block has no skip-to-content link",
+      "evidence": "Keyboard users tab through the header logo area before reaching the game canvas. No skip link to bypass decorative header content.",
+      "location": "src/App.tsx (header section)"
+    },
+    {
+      "id": "P2-2",
+      "title": "Left sidebar hidden below xl breakpoint loses mission instructions",
+      "evidence": "MISSION LOG with gameplay instructions is hidden at xl: breakpoint via 'hidden xl:flex'. Smaller screens lose the how-to-play context entirely.",
+      "location": "src/App.tsx (line 80)"
+    },
+    {
+      "id": "P2-3",
+      "title": "Game canvas renders at fixed 800x600 regardless of container size",
+      "evidence": "Canvas width/height attributes are hardcoded to BASE_WIDTH=800, BASE_HEIGHT=600. CSS scales it visually but the internal resolution doesn't adapt, causing blurriness on HiDPI displays.",
+      "location": "src/components/SpaceInvaders.tsx"
+    },
+    {
+      "id": "P2-4",
+      "title": "Simulated metrics have no semantic meaning",
+      "evidence": "CPU LOAD, MEMORY FREE, CORE TEMP are purely decorative random numbers. While on-brand for the aesthetic, they add visual noise without information value.",
+      "location": "src/App.tsx (metrics section)"
+    },
+    {
+      "id": "P2-5",
+      "title": "No prefers-reduced-motion handling for game canvas animations",
+      "evidence": "CSS has @media (prefers-reduced-motion: reduce) for UI animations, but the canvas-based game loop ignores this preference entirely.",
+      "location": "src/components/SpaceInvaders.tsx"
+    }
+  ],
+  "strengths": [
+    "Genuine craft in the vaporwave visual system: CRT vignette, scanlines, vaporwave perspective grid, neon glow tokens. The aesthetic is committed and cohesive, not surface-level.",
+    "The SpaceInvaders game engine is impressively feature-rich: 18 pixel-art invader shapes, boss battles, power-ups, particle systems, Web Audio synth SFX, UFO waves, and score persistence.",
+    "The cassette deck audio player is a standout visual metaphor with animated tape reels, TYPE II label detail, and equalizer bars that respond to play state."
+  ],
+  "risks": [
+    "The 1700-line monolith makes any future feature addition high-risk for regressions.",
+    "Hardcoded hex colors in canvas code mean a brand refresh would require editing 60+ locations across the game engine.",
+    "No automated tests exist. The game logic (collision, power-ups, boss patterns) is entirely untested."
+  ],
+  "questions": [
+    "Should the game state machine be extracted into a custom hook or class to enable testing and reuse?",
+    "Would a sprite-sheet approach (single image, source-rect lookup) replace the 18 drawShape methods more maintainably?",
+    "Should the canvas rendering read CSS custom properties for colors to unify the design token system?"
+  ],
+  "recommendation": "Start with P0-3 and P0-4 (extract color constants and consolidate drawShape methods). These are the highest-leverage refactors: they reduce the file by ~700 lines and connect the canvas code to the design system. Then tackle P0-2 by extracting the game engine into a testable module.",
+  "target": "src/App.tsx (full surface: App, AudioPlayer, SpaceInvaders)",
+  "register": "product",
+  "scope": "full surface critique",
+  "critiquedAt": "2026-06-16T16:02:00Z",
+  "toolchain": "react 19 + vite 6 + tailwindcss 4 + motion 12",
+  "mode": "static-only",
+  "assessments": {
+    "designReview": "completed",
+    "detector": "unavailable",
+    "browser": "skipped"
+  }
+}

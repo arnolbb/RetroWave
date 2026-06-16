@@ -1,5 +1,5 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Play, Pause, SkipForward, SkipBack, Music, Volume2 } from 'lucide-react';
+﻿import React, { useState, useRef, useEffect } from 'react';
+import { Play, Pause, SkipForward, SkipBack, Volume2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 interface Track {
@@ -15,10 +15,14 @@ const DUMMY_TRACKS: Track[] = [
   { id: 3, title: "Neon Nights", artist: "SynthWaveX", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3" }
 ];
 
+const EQUALIZER_BARS = [0.55, 0.8, 0.45, 0.95, 0.62, 0.75, 0.5, 0.88];
+
 export default function AudioPlayer() {
   const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [volume, setVolume] = useState(0.5);
+  const [audioError, setAudioError] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const currentTrack = DUMMY_TRACKS[currentTrackIndex];
@@ -26,22 +30,33 @@ export default function AudioPlayer() {
   useEffect(() => {
     if (audioRef.current) {
       if (isPlaying) {
-        audioRef.current.play().catch(console.error);
+        audioRef.current.play().then(() => setAudioError(false)).catch(() => {
+          setIsPlaying(false);
+          setAudioError(true);
+        });
       } else {
         audioRef.current.pause();
       }
     }
   }, [isPlaying, currentTrackIndex]);
 
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.volume = volume;
+    }
+  }, [volume]);
+
   const togglePlay = () => setIsPlaying(!isPlaying);
 
   const handleNext = () => {
     setCurrentTrackIndex((prev) => (prev + 1) % DUMMY_TRACKS.length);
+    setAudioError(false);
     setIsPlaying(true);
   };
 
   const handlePrev = () => {
     setCurrentTrackIndex((prev) => (prev - 1 + DUMMY_TRACKS.length) % DUMMY_TRACKS.length);
+    setAudioError(false);
     setIsPlaying(true);
   };
 
@@ -57,77 +72,142 @@ export default function AudioPlayer() {
   };
 
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="glass-morphism rounded-2xl p-6 w-full max-w-md shadow-2xl relative overflow-hidden"
+      className="arcade-panel p-4 w-full max-w-md relative overflow-hidden"
     >
-      <div className="flex items-center gap-6 relative z-10">
-        <div className="w-20 h-20 bg-neon-purple/20 rounded-lg flex items-center justify-center border border-neon-pink/30 relative">
-          <motion.div
-            animate={isPlaying ? { rotate: 360 } : {}}
-            transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
-          >
-            <Music className="w-10 h-10 text-neon-pink" />
-          </motion.div>
-          {isPlaying && (
-             <span className="absolute -top-1 -right-1 flex h-3 w-3">
-               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-neon-green opacity-75"></span>
-               <span className="relative inline-flex rounded-full h-3 w-3 bg-neon-green"></span>
-             </span>
-          )}
-        </div>
-        
-        <div className="flex-1">
-          <AnimatePresence mode="wait">
+      <div className="flex flex-col gap-4 relative z-10">
+
+        {/* Cassette tape module */}
+        <div className="relative w-full h-20 bg-[#040306] border border-white/10 rounded-lg overflow-hidden flex items-center justify-center">
+          {/* Tape wheels background */}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/60 to-black/90 pointer-events-none" />
+
+          {/* Left Wheel */}
+          <div className="absolute left-10 w-10 h-10 border-4 border-zinc-700/60 rounded-full flex items-center justify-center bg-zinc-900">
             <motion.div
-              key={currentTrack.id}
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 10 }}
-            >
-              <h3 className="font-bold text-lg text-neon-blue neon-text-blue truncate">{currentTrack.title}</h3>
-              <p className="text-sm text-neon-purple opacity-80 uppercase tracking-widest font-mono">{currentTrack.artist}</p>
-            </motion.div>
-          </AnimatePresence>
-          
-          <div className="mt-4 flex items-center gap-3">
-            <button onClick={handlePrev} className="p-2 hover:text-neon-pink transition-colors">
-              <SkipBack className="w-5 h-5" />
-            </button>
-            <button 
-              onClick={togglePlay} 
-              className="w-10 h-10 bg-neon-pink rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-transform"
-            >
-              {isPlaying ? <Pause className="w-5 h-5 text-white" /> : <Play className="w-5 h-5 text-white translate-x-0.5" />}
-            </button>
-            <button onClick={handleNext} className="p-2 hover:text-neon-pink transition-colors">
-              <SkipForward className="w-5 h-5" />
-            </button>
+              className="w-6 h-6 border-2 border-neon-pink/40 border-dashed rounded-full"
+              animate={isPlaying ? { rotate: 360 } : {}}
+              transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+            />
+          </div>
+
+          {/* Tape Center Label */}
+          <div className="w-2/5 h-14 bg-[#111827] border border-white/10 rounded flex flex-col items-center justify-center p-2 z-10">
+            <span className="text-[9px] font-mono uppercase tracking-widest text-neon-blue neon-text-blue font-bold">TYPE II</span>
+            <div className="w-full h-1 bg-neon-blue mt-2 rounded" />
+            <span className="text-[7px] font-mono text-white/50 mt-1 uppercase">Dolby B-C NR</span>
+          </div>
+
+          {/* Right Wheel */}
+          <div className="absolute right-10 w-10 h-10 border-4 border-zinc-700/60 rounded-full flex items-center justify-center bg-zinc-900">
+            <motion.div
+              className="w-6 h-6 border-2 border-neon-pink/40 border-dashed rounded-full"
+              animate={isPlaying ? { rotate: 360 } : {}}
+              transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+            />
+          </div>
+
+          {/* Grid visual overlay */}
+          <div className="absolute bottom-1 right-2 text-[8px] font-mono text-white/20 select-none">
+            REEL A
           </div>
         </div>
+
+        {/* Title and simulated visualizer equalizer */}
+        <div className="flex justify-between items-center gap-3">
+          <div className="flex-1 min-w-0">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={currentTrack.id}
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 10 }}
+              >
+                <h3 className="font-bold text-base text-neon-blue neon-text-blue truncate">{currentTrack.title}</h3>
+                <p className="text-xs text-neon-purple opacity-90 uppercase tracking-widest font-mono font-semibold">{currentTrack.artist}</p>
+              </motion.div>
+            </AnimatePresence>
+          </div>
+
+          {/* Equalizer */}
+          <div className="flex items-end gap-0.5 h-7 w-14 bg-black/45 p-1 px-1.5 rounded-md border border-white/10">
+            {EQUALIZER_BARS.map((height, i) => (
+              <div
+                key={i}
+                className="w-1 bg-neon-pink rounded-t"
+                style={{
+                  height: isPlaying ? `${height * 100}%` : '15%',
+                  animation: isPlaying ? `equalizer ${0.42 + i * 0.045}s ease-out infinite alternate` : 'none',
+                  animationDelay: `${i * 0.08}s`,
+                  boxShadow: isPlaying ? '0 0 4px var(--color-neon-pink)' : 'none'
+                }}
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* Media Controls */}
+        <div className="flex items-center justify-center gap-5">
+          <button onClick={handlePrev} className="interactive-icon text-neon-purple hover:text-neon-pink" aria-label="Previous track">
+            <SkipBack className="w-6 h-6" />
+          </button>
+          <button
+            onClick={togglePlay}
+            className="w-12 h-12 bg-neon-pink hover:bg-[#ff8ed8] rounded-full flex items-center justify-center active:scale-95 transition-transform border border-white/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neon-blue"
+            aria-label={isPlaying ? 'Pause track' : 'Play track'}
+          >
+            {isPlaying ? <Pause className="w-5 h-5 text-white" /> : <Play className="w-5 h-5 text-white translate-x-0.5" />}
+          </button>
+          <button onClick={handleNext} className="interactive-icon text-neon-purple hover:text-neon-pink" aria-label="Next track">
+            <SkipForward className="w-6 h-6" />
+          </button>
+        </div>
+        {audioError && (
+          <p className="text-[10px] font-mono text-neon-yellow/85 text-center">
+            Track stream unavailable. Try the next channel.
+          </p>
+        )}
       </div>
 
-      <div className="mt-6">
-        <div className="h-1 bg-white/10 rounded-full w-full overflow-hidden">
-          <motion.div 
-             className="h-full bg-neon-pink shadow-lg shadow-neon-pink"
-             animate={{ width: `${progress}%` }}
+      {/* Progress Bar slider */}
+      <div className="mt-4 flex flex-col gap-1.5">
+        <div className="h-1 bg-white/10 rounded-full w-full overflow-hidden relative">
+          <motion.div
+             className="h-full bg-neon-pink"
+             style={{ width: `${progress}%` }}
              transition={{ duration: 0.1 }}
           />
         </div>
+        <div className="flex justify-between text-[9px] font-mono text-neon-blue/50">
+          <span>0:00</span>
+          <span>SYNTH CHANNEL</span>
+        </div>
       </div>
 
-      <audio 
+      {/* Volume Controller Slider */}
+      <div className="mt-3 flex items-center gap-3 text-neon-blue bg-black/20 p-2 px-3 rounded-lg border border-white/10">
+        <Volume2 className="w-4 h-4 text-neon-blue opacity-85" />
+        <input
+          type="range"
+          min="0"
+          max="1"
+          step="0.01"
+          value={volume}
+          onChange={(e) => setVolume(parseFloat(e.target.value))}
+          className="w-full h-1 bg-white/15 rounded-lg appearance-none cursor-pointer accent-neon-pink"
+          aria-label="Music volume"
+        />
+        <span className="text-xs font-mono w-10 text-right text-neon-blue font-bold">{Math.round(volume * 100)}%</span>
+      </div>
+
+      <audio
         ref={audioRef}
         src={currentTrack.url}
         onTimeUpdate={handleTimeUpdate}
         onEnded={handleEnded}
       />
-      
-      {/* Background Glow */}
-      <div className="absolute -top-10 -right-10 w-32 h-32 bg-neon-pink/10 blur-3xl rounded-full" />
-      <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-neon-purple/10 blur-3xl rounded-full" />
     </motion.div>
   );
 }

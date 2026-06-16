@@ -1,6 +1,6 @@
 {
   "name": "Neon Invaders & Synth Player",
-  "description": "A retro-futuristic Space Invaders game merged with a vaporwave music player. Experience 80s synth-wave vibes with high-score tracking and dark mode.",
+  "description": "A dark vaporwave arcade game with a Space Invaders-inspired shooter, synth audio deck, high-score tracking, and cabinet telemetry.",
   "requestFramePermissions": [],
   "majorCapabilities": []
 }
