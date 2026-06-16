@@ -1,35 +1,38 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
-
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
-import { Moon, Sun, Monitor, Radio } from 'lucide-react';
+﻿import React, { useState, useEffect } from 'react';
+import { motion } from 'motion/react';
+import { Activity, Cpu, Radio, Terminal } from 'lucide-react';
 import SpaceInvaders from './components/SpaceInvaders';
 import AudioPlayer from './components/AudioPlayer';
 
 export default function App() {
-  const [darkMode, setDarkMode] = useState(() => {
-    const saved = localStorage.getItem('neon-theme');
-    return saved ? saved === 'dark' : true;
-  });
   const [highScore, setHighScore] = useState(() => {
     const saved = localStorage.getItem('neon-invaders-highscore');
     return saved ? parseInt(saved, 10) : 0;
   });
 
-  useEffect(() => {
-    if (darkMode) {
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('neon-theme', 'dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('neon-theme', 'light');
-    }
-  }, [darkMode]);
+  // Dynamic system status values
+  const [metrics, setMetrics] = useState({
+    cpu: '18%',
+    ram: '42KB',
+    temp: '44°C',
+    signal: 'STABLE'
+  });
 
-  const toggleDarkMode = () => setDarkMode(!darkMode);
+  // Simulate hardware metrics fluctuations
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const cpuVal = Math.floor(12 + Math.random() * 15);
+      const ramVal = Math.floor(38 + Math.random() * 8);
+      const tempVal = Math.floor(40 + Math.random() * 6);
+      setMetrics({
+        cpu: `${cpuVal}%`,
+        ram: `${ramVal}KB`,
+        temp: `${tempVal}°C`,
+        signal: Math.random() > 0.95 ? 'SIGNAL NOISE' : 'STABLE'
+      });
+    }, 2500);
+    return () => clearInterval(interval);
+  }, []);
 
   const handleScoreUpdate = (score: number) => {
     if (score > highScore) {
@@ -39,101 +42,108 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen relative overflow-x-hidden flex flex-col font-sans">
-      {/* Background Layer moved to layout wrapper for better dark mode support */}
-      <div className="fixed inset-0 z-0 bg-gradient-to-b from-[#f7e8ff] to-[#e4c1ff] dark:from-[#0b0114] dark:to-[#1a1025] transition-colors duration-500" />
-      
-      {/* Animated Vaporwave Grid */}
+    <div className="h-screen relative overflow-hidden flex flex-col font-sans transition-colors duration-500">
+
+      <div className="fixed inset-0 z-0 bg-[#09030f]" />
+      <div className="fixed inset-0 z-0 pointer-events-none crt-vignette" />
+
+      {/* Vaporwave 3D Grid */}
       <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
-        <div className="absolute bottom-0 left-0 right-0 h-[40vh] md:h-[60vh] vaporwave-grid">
+        <div className="absolute bottom-0 left-0 right-0 h-[45vh] md:h-[60vh] vaporwave-grid">
            <div className="h-full w-full vaporwave-grid-inner animate-grid-drift" />
         </div>
       </div>
 
-      {/* Retro Sun / Backdrop */}
-      <div className="fixed top-1/4 left-1/2 -translate-x-1/2 z-0 w-[300px] h-[300px] md:w-[400px] md:h-[400px]">
-        <div className="w-full h-full rounded-full bg-gradient-to-t from-neon-pink via-neon-purple to-transparent opacity-20 dark:opacity-30 blur-2xl" />
-        <div className="absolute inset-0 rounded-full border-b-8 border-neon-pink/40 translate-y-4" />
-      </div>
-
-      {/* Main Content */}
-      <header className="relative z-20 flex justify-between items-center p-4 md:p-6 lg:px-12">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-neon-pink rounded-lg shadow-lg shadow-neon-pink/20">
-            <Radio className="text-white w-5 h-5 md:w-6 md:h-6" />
+      {/* Main header block */}
+      <header className="relative z-20 h-20 shrink-0 flex items-center px-5 md:px-8 lg:px-12 border-b border-white/10 bg-[#0d0713]/92">
+        <div className="flex items-center gap-3.5">
+          <div className="relative grid h-11 w-11 place-items-center rounded-lg border border-neon-pink/60 bg-[#18091f]">
+            <Radio className="h-5 w-5 text-neon-pink" />
+            <span className="absolute -bottom-1 h-px w-7 bg-neon-blue/70" />
           </div>
           <div>
-            <h1 className="text-lg md:text-2xl font-bold tracking-tighter italic text-neon-purple dark:text-white uppercase leading-none">
-              Retro<span className="text-neon-pink">Wave</span>
+            <h1 className="text-xl md:text-2xl font-bold italic text-white uppercase leading-none tracking-normal">
+              RETRO<span className="text-neon-pink">WAVE</span>
             </h1>
-            <p className="text-[8px] md:text-[10px] uppercase tracking-[0.4em] opacity-60 font-mono">System v4.2.0</p>
+            <p className="text-[8px] md:text-[9px] uppercase tracking-[0.28em] text-white/55 font-mono mt-1">Neon Arcade Core v4.5.1</p>
           </div>
         </div>
-
-        <button 
-          onClick={toggleDarkMode}
-          className="p-3 glass-morphism rounded-full hover:scale-110 transition-transform text-neon-purple dark:text-neon-yellow shadow-xl"
-        >
-          {darkMode ? <Sun className="w-5 h-5 md:w-6 md:h-6" /> : <Moon className="w-5 h-5 md:w-6 md:h-6" />}
-        </button>
       </header>
 
-      <main className="relative z-10 flex-1 flex flex-col items-center p-4 gap-8 lg:gap-12 lg:flex-row lg:items-start lg:justify-center">
-        {/* Left Side: Instructions / Meta */}
-        <motion.div 
-          initial={{ opacity: 0, x: -50 }}
+      {/* Main responsive grid layout */}
+      <main className="relative z-10 flex-1 min-h-0 flex flex-col items-center gap-4 p-3 md:p-4 lg:flex-row lg:items-start lg:justify-center lg:px-8 xl:px-10 max-w-[1536px] mx-auto w-full">
+
+        {/* Left Side: System Information & Console Logs */}
+        <motion.div
+          initial={{ opacity: 0, x: -40 }}
           animate={{ opacity: 1, x: 0 }}
-          className="hidden xl:flex flex-col gap-6 w-64 mt-20"
+          transition={{ delay: 0.1 }}
+          className="hidden xl:flex flex-col gap-4 w-64 xl:w-72 shrink-0"
         >
-          <div className="glass-morphism p-4 rounded-xl border-l-4 border-l-neon-pink">
-            <h4 className="text-xs uppercase tracking-widest font-bold text-neon-pink mb-2">Operation</h4>
-            <p className="text-sm opacity-70 leading-relaxed font-mono">Defend the sector against the digital invasion. Use the synth rhythms to maintain focus.</p>
+          <div className="arcade-panel p-4">
+            <div className="flex items-center gap-2 mb-2 text-neon-pink">
+              <Terminal className="w-4 h-4" />
+              <h4 className="text-xs uppercase tracking-[0.16em] font-bold font-mono">MISSION LOG</h4>
+            </div>
+            <p className="text-[11px] text-white/70 leading-relaxed font-mono">
+              Incoming wave. Move with A/D or arrows, fire with Space, and clear the formation before it reaches the grid.
+            </p>
           </div>
-          
-          <div className="glass-morphism p-4 rounded-xl border-l-4 border-l-neon-blue">
-            <h4 className="text-xs uppercase tracking-widest font-bold text-neon-blue mb-2">Hardware</h4>
-            <div className="text-[10px] space-y-2 font-mono opacity-50">
-              <p>CPU: GENESIS-9000</p>
-              <p>RAM: 64KB NEON-CORE</p>
-              <p>GFX: SCANLINE-RTX</p>
+
+          <div className="arcade-panel p-4">
+            <div className="flex items-center gap-2 mb-2 text-neon-blue">
+              <Cpu className="w-4 h-4" />
+              <h4 className="text-xs uppercase tracking-[0.16em] font-bold font-mono">ARCADE STATUS</h4>
+            </div>
+            <div className="text-[10px] space-y-2 font-mono text-white/55">
+              <p>CPU: GENESIS-9000-X</p>
+              <p>RAM: 64KB DUAL-NEON</p>
+              <p>GFX: SCANLINE-EMU-RT</p>
+              <p>SND: FM-SYNTH-AUDIO</p>
             </div>
           </div>
         </motion.div>
 
-        {/* Center: Game Window */}
-        <div className="flex flex-col items-center w-full max-w-full overflow-hidden">
+        {/* Center: Game Cabinet Frame */}
+        <div className="flex min-h-0 flex-col items-center w-full flex-1 max-w-[700px] 2xl:max-w-[760px] overflow-hidden">
           <motion.div
-            initial={{ scale: 0.9, opacity: 0 }}
+            initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ type: "spring", damping: 15 }}
             className="relative w-full flex justify-center"
           >
-             <div className="absolute -inset-4 bg-gradient-to-r from-neon-pink via-neon-purple to-neon-blue rounded-xl blur-2xl opacity-10 animate-pulse hidden md:block" />
-             <div className="w-full max-w-[600px]">
+             <div className="w-full">
                 <SpaceInvaders onScoreUpdate={handleScoreUpdate} highScore={highScore} />
              </div>
           </motion.div>
         </div>
 
-        {/* Right Side: Music Player & Stats */}
-        <div className="w-full max-w-md flex flex-col gap-6">
+        {/* Right Side: Cassette Deck Audio & Dynamic Status widgets */}
+        <div className="w-full lg:w-80 xl:w-[340px] shrink-0 flex min-h-0 flex-col gap-4">
           <AudioPlayer />
-          
-          <div className="glass-morphism p-6 rounded-2xl flex flex-col gap-4">
-            <div className="flex items-center gap-2 text-neon-blue">
-               <Monitor className="w-4 h-4" />
-               <h3 className="text-xs uppercase tracking-widest font-bold">System Status</h3>
+
+          {/* living metrics dashboard card */}
+          <div className="arcade-panel p-4 flex flex-col gap-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-neon-blue">
+                 <Activity className="w-4 h-4 text-neon-blue" />
+                 <h3 className="text-xs uppercase tracking-[0.16em] font-bold font-mono">CABINET STATUS</h3>
+              </div>
+              <span className="text-[8px] bg-neon-blue/15 text-neon-blue px-2 py-0.5 rounded font-mono font-bold border border-neon-blue/20">LIVE</span>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+
+            <div className="divide-y divide-white/10 border-t border-white/10">
               {[
-                { label: 'Latency', value: '1.2ms' },
-                { label: 'Uptime', value: '100%' },
-                { label: 'Signal', value: 'Stable' },
-                { label: 'Mood', value: 'Synth' }
+                { label: 'CPU LOAD', value: metrics.cpu, color: 'text-neon-pink' },
+                { label: 'MEMORY FREE', value: metrics.ram, color: 'text-neon-green' },
+                { label: 'CORE TEMP', value: metrics.temp, color: 'text-neon-yellow' },
+                { label: 'GRID SIGNAL', value: metrics.signal, color: 'text-neon-blue' }
               ].map((item, i) => (
-                <div key={i} className="bg-black/5 dark:bg-black/20 p-3 rounded-lg border border-white/10">
-                  <p className="text-[9px] uppercase tracking-tighter opacity-50">{item.label}</p>
-                  <p className="text-sm font-mono text-neon-blue dark:text-neon-blue">{item.value}</p>
+                <div key={i} className="flex items-center justify-between gap-4 py-2.5">
+                  <p className="text-[9px] uppercase tracking-[0.08em] text-white/55 font-mono">{item.label}</p>
+                  <p className={`text-sm font-bold font-mono ${item.color}`}>
+                    {item.value}
+                  </p>
                 </div>
               ))}
             </div>
@@ -141,15 +151,12 @@ export default function App() {
         </div>
       </main>
 
-      <footer className="relative z-20 p-8 text-center text-[10px] opacity-40 font-mono tracking-widest uppercase">
-          &copy; 198X Cyber-Entertainment Systems | Built with Neon
-      </footer>
-
-      {/* Global Filter Effects */}
-      <div className="fixed inset-0 pointer-events-none z-50 overflow-hidden mix-blend-overlay opacity-20">
+      {/* Retro scanlines filter effects */}
+      <div className="fixed inset-0 pointer-events-none z-50 overflow-hidden mix-blend-overlay opacity-15">
         <div className="absolute inset-0 scanline" />
         <div className="scanline-beam animate-scanline" />
       </div>
     </div>
   );
 }
+
